@@ -1,5 +1,18 @@
 const { Client, GatewayIntentBits } = require("discord.js");
+const http = require("http");
 
+// Create a simple HTTP server for Render
+const server = http.createServer((req, res) => {
+  res.writeHead(200, { 'Content-Type': 'text/plain' });
+  res.end('Discord bot is running!');
+});
+
+const PORT = process.env.PORT || 3000;
+server.listen(PORT, () => {
+  console.log(`HTTP server listening on port ${PORT}`);
+});
+
+// Your Discord bot code
 const client = new Client({
   intents: [
     GatewayIntentBits.Guilds,
@@ -8,7 +21,6 @@ const client = new Client({
   ],
 });
 
-// Your specific channels and user
 const MONITORED_CHANNELS = [
   "1413912845724422345", // profitpath 50spm
   "1414172163304591361"  // profitpath high profit
@@ -20,19 +32,28 @@ const token = process.env.BOT_TOKEN;
 
 client.once("ready", () => {
   console.log(`✅ Bot logged in successfully as ${client.user.tag}!`);
+  console.log(`📋 Monitoring channels: ${MONITORED_CHANNELS.join(', ')}`);
 });
 
-// Listen for messages (including webhook messages)
 client.on("messageCreate", (message) => {
-  // Skip bot's own messages
-  if (message.author.id === client.user.id) return;
+  console.log(`🔍 Message seen:`);
+  console.log(`  Channel ID: ${message.channel.id}`);
+  console.log(`  Channel Name: ${message.channel.name}`);
+  console.log(`  Author: ${message.author.tag} (Bot: ${message.author.bot})`);
   
-  // Check if in monitored channel
+  if (message.author.id === client.user.id) {
+    console.log(`  ⏭️ Skipping own message`);
+    return;
+  }
+  
   if (MONITORED_CHANNELS.includes(message.channel.id)) {
-    console.log(`📨 Message detected in monitored channel`);
+    console.log(`  ✅ Message is in monitored channel!`);
     
-    // Send the ping
-    message.channel.send(`Heads up ${STAFF_TO_PING}, a new webhook message was posted.`);
+    message.channel.send(`Heads up ${STAFF_TO_PING}, a new webhook message was posted.`)
+      .then(() => console.log(`  📤 Ping sent successfully`))
+      .catch(err => console.log(`  ❌ Failed to send ping: ${err}`));
+  } else {
+    console.log(`  ❌ Message not in monitored channels`);
   }
 });
 
