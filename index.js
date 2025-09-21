@@ -1,23 +1,5 @@
 const { Client, GatewayIntentBits } = require("discord.js");
 
-const token = process.env.DISCORD_TOKEN; // <-- from Railway
-
-// --- DEBUG: prove what we actually received ---
-if (!token) {
-  console.error("❌ ENV DISCORD_TOKEN is missing (empty).");
-  process.exit(1);
-}
-const parts = token.split(".");
-const masked =
-  token.length > 10
-    ? `${token.slice(0, 6)}...${token.slice(-6)} (len ${token.length}, parts ${parts.length})`
-    : token;
-console.log("🔐 Got DISCORD_TOKEN:", masked);
-if (parts.length !== 3) {
-  console.error("❌ Token format wrong: Discord bot tokens have 3 dot-separated parts.");
-}
-// ----------------------------------------------
-
 const client = new Client({
   intents: [
     GatewayIntentBits.Guilds,
@@ -26,13 +8,53 @@ const client = new Client({
   ],
 });
 
+// Load token from Railway env vars
+const token = process.env.DISCORD_TOKEN;
+
+// Debug logging - this will help identify the issue
+console.log("🔍 Debug Info:");
+console.log(`Token exists: ${!!token}`);
+console.log(`Token length: ${token ? token.length : 0}`);
+console.log(`First 10 chars: ${token ? token.substring(0, 10) : 'N/A'}`);
+console.log(`Last 10 chars: ${token ? token.substring(token.length - 10) : 'N/A'}`);
+
+if (token) {
+  const parts = token.split(".");
+  console.log(`Token parts (should be 3): ${parts.length}`);
+  
+  // Check for common issues
+  if (token.startsWith('"') && token.endsWith('"')) {
+    console.log("❌ ERROR: Token has quotes around it!");
+  }
+  if (token.includes(' ')) {
+    console.log("❌ ERROR: Token contains spaces!");
+  }
+  if (parts.length !== 3) {
+    console.log("❌ ERROR: Token doesn't have 3 parts separated by dots!");
+  }
+} else {
+  console.log("❌ ERROR: No token found in environment variables!");
+}
+
 client.once("ready", () => {
-  console.log(`✅ Logged in as ${client.user.tag}`);
+  console.log(`✅ Bot successfully logged in as ${client.user.tag}`);
 });
 
-client.on("messageCreate", async (msg) => {
-  if (msg.author.bot) return;
-  // (we’ll add your channel logic once we’re logged in)
+client.on('error', (error) => {
+  console.error('❌ Client error:', error);
 });
 
-client.login(token);
+// Add error handling for login
+client.login(token).catch(error => {
+  console.error('❌ Login failed:', error.message);
+  console.error('Code:', error.code);
+  
+  if (error.code === 'TokenInvalid') {
+    console.log('\n🔧 Troubleshooting steps:');
+    console.log('1. Reset your bot token in Discord Developer Portal');
+    console.log('2. Copy the NEW token');
+    console.log('3. Update Railway environment variable (Raw Editor)');
+    console.log('4. Make sure no quotes or extra characters');
+    console.log('5. Redeploy');
+  }
+});
