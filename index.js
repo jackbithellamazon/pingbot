@@ -8,7 +8,7 @@ const client = new Client({
   ],
 });
 
-const token = process.env.DISCORD_TOKEN;
+const token = process.env.BOT_TOKEN;
 
 client.once("ready", () => {
   console.log(`Bot is working!`);
