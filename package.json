@@ -1,7 +1,11 @@
 {
   "name": "pingbot",
   "version": "1.0.0",
+  "description": "A Discord bot to ping staff when messages match triggers.",
   "main": "index.js",
+  "scripts": {
+    "start": "node index.js"
+  },
   "dependencies": {
     "discord.js": "^14.15.3"
   }
